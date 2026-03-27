@@ -5,7 +5,7 @@ from networkx.algorithms import community
 
 st.set_page_config(page_title="Dynamic Network Analysis", layout="centered")
 
-st.title("📊 Dynamic Social Network Analysis")
+st.title("📊Social Network Analysis")
 
 # Initialize graph in session state
 if "G" not in st.session_state:
