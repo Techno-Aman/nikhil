@@ -3,106 +3,199 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from networkx.algorithms import community
 
-st.set_page_config(page_title="Dynamic Network Analysis", layout="centered")
+st.set_page_config(page_title="Fan Network Analysis", layout="centered")
 
-st.title("📊Social Network Analysis")
+# ---------------- PAGE SELECTOR ----------------
+page = st.sidebar.radio("📂 Select Page", ["🏠 Main App", "📖 Explanation"])
 
-# Initialize graph in session state
-if "G" not in st.session_state:
-    st.session_state.G = nx.Graph()
+# ---------------- EXPLANATION PAGE ----------------
+if page == "📖 Explanation":
 
-G = st.session_state.G
+    st.title("📖 Project Explanation")
 
-# ---------------- SIDEBAR ----------------
-st.sidebar.header("⚙️ Controls")
+    st.header("🎬 Entertainment Fan Network Analysis")
 
-# Add Node
-new_node = st.sidebar.text_input("Add Node")
-if st.sidebar.button("➕ Add Node"):
-    if new_node:
-        G.add_node(new_node)
-        st.sidebar.success(f"Node '{new_node}' added!")
+    st.write("""
+This project models how fans interact in online communities using Graph Theory.
 
-# Add Edge
-st.sidebar.subheader("Add Connection")
-nodes = list(G.nodes())
+Each fan is represented as a node, and connections between fans are represented as edges.
+""")
 
-node1 = st.sidebar.selectbox("Node 1", nodes)
-node2 = st.sidebar.selectbox("Node 2", nodes)
+    st.subheader("🔹 Key Concepts")
 
-if st.sidebar.button("🔗 Add Edge"):
-    if node1 and node2:
-        G.add_edge(node1, node2)
-        st.sidebar.success(f"Edge ({node1}, {node2}) added!")
+    st.write("""
+**1. Graph Theory**
+- Fans = Nodes  
+- Connections = Edges  
 
-# Reset Graph
-if st.sidebar.button("🗑 Reset Graph"):
-    st.session_state.G = nx.Graph()
-    st.sidebar.warning("Graph reset!")
+**2. Community Detection**
+- The app uses the Greedy Modularity Algorithm  
+- It groups fans into communities based on strong connections  
 
+**3. Influencer Ranking**
+- Uses Degree Centrality  
+- Fans with more connections are more influential  
 
-# ---------------- DELETE NODE ----------------
-st.sidebar.subheader("🗑 Delete Node")
+**4. Fan Categories**
+- Each fan is assigned a type like:
+  - Marvel  
+  - Anime  
+  - K-pop  
+  - Bollywood  
+  - Gaming  
 
-nodes = list(G.nodes())
+**5. Network Statistics**
+- Total Fans → Number of users  
+- Connections → Relationships  
+- Density → How connected the network is  
+""")
 
-if nodes:
-    del_node = st.sidebar.selectbox("Select Node to Delete", nodes, key="del_node")
+    st.subheader("🎯 Real-Life Application")
 
-    if st.sidebar.button("❌ Delete Node"):
-        G.remove_node(del_node)
-        st.sidebar.success(f"Node '{del_node}' deleted!")
+    st.write("""
+- Social media analysis (Instagram, Twitter)
+- Marketing strategies (target influencers)
+- Understanding fan communities
+- Recommendation systems
+""")
+
+    st.subheader("🛠 Technologies Used")
+
+    st.write("""
+- Python  
+- Streamlit  
+- NetworkX  
+- Matplotlib  
+""")
+
+    st.success("✅ This project demonstrates real-world network analysis in a simple and interactive way.")
+
+# ---------------- MAIN APP ----------------
 else:
-    st.sidebar.info("No nodes to delete")
 
+    st.title("🎬 Entertainment Fan Network Analysis")
 
-# ---------------- DELETE EDGE ----------------
-st.sidebar.subheader("🔗 Delete Connection")
+    # Initialize graph
+    if "G" not in st.session_state:
+        st.session_state.G = nx.Graph()
 
-edges = list(G.edges())
+    G = st.session_state.G
 
-if edges:
-    del_edge = st.sidebar.selectbox("Select Edge to Delete", edges, key="del_edge")
+    st.sidebar.header("⚙️ Controls")
 
-    if st.sidebar.button("❌ Delete Edge"):
-        G.remove_edge(*del_edge)
-        st.sidebar.success(f"Edge {del_edge} deleted!")
-else:
-    st.sidebar.info("No edges to delete")
+    # Fan Type
+    fan_type = st.sidebar.selectbox(
+        "Select Fan Type",
+        ["Marvel", "Anime", "K-pop", "Bollywood", "Gaming"]
+    )
 
-# ---------------- MAIN CONTENT ----------------
+    # Add Fan
+    fan = st.sidebar.text_input("Enter Fan Name")
 
-# Show Nodes & Edges
-col2, col3 = st.columns(2)
+    if st.sidebar.button("➕ Add Fan"):
+        if fan:
+            G.add_node(fan, category=fan_type)
+            st.sidebar.success(f"{fan} added!")
 
-# ---------------- COLUMN 2 ----------------
-with col2:
+    # Add Connection
+    st.sidebar.subheader("🔗 Connect Fans")
+
+    nodes = list(G.nodes())
+
+    if len(nodes) >= 2:
+        fan1 = st.sidebar.selectbox("Fan 1", nodes)
+        fan2 = st.sidebar.selectbox("Fan 2", nodes)
+
+        if st.sidebar.button("Connect"):
+            if fan1 != fan2:
+                G.add_edge(fan1, fan2)
+                st.sidebar.success(f"{fan1} ↔ {fan2} connected!")
+            else:
+                st.sidebar.warning("Choose different fans")
+
+    # Delete Fan
+    st.sidebar.subheader("🗑 Remove Fan")
+
+    if nodes:
+        remove_fan = st.sidebar.selectbox("Select Fan", nodes, key="remove_fan")
+
+        if st.sidebar.button("Delete Fan"):
+            G.remove_node(remove_fan)
+            st.sidebar.success(f"{remove_fan} removed!")
+
+    # Delete Edge
+    st.sidebar.subheader("❌ Remove Connection")
+
+    edges = list(G.edges())
+
+    if edges:
+        remove_edge = st.sidebar.selectbox("Select Connection", edges)
+
+        if st.sidebar.button("Delete Connection"):
+            G.remove_edge(*remove_edge)
+            st.sidebar.success(f"{remove_edge} removed!")
+
+    # Reset
+    if st.sidebar.button("🔄 Reset Network"):
+        st.session_state.G = nx.Graph()
+        st.sidebar.warning("Network cleared!")
+
+    # ---------------- MAIN CONTENT ----------------
     if len(G.nodes()) > 0:
-        st.subheader("⭐ Influencer Ranking")
-        centrality = nx.degree_centrality(G)
 
-        for fan, score in centrality.items():
-            st.write(f"{fan} : {round(score, 2)}")
+        st.subheader("📊 Network Statistics")
 
-# ---------------- COLUMN 3 ----------------
-with col3:
-    if len(G.nodes()) > 0:
-        st.subheader("👥 Communities")
-        communities = community.greedy_modularity_communities(G)
+        st.write(f"👥 Total Fans: {G.number_of_nodes()}")
+        st.write(f"🔗 Total Connections: {G.number_of_edges()}")
+        st.write(f"📉 Density: {round(nx.density(G), 3)}")
 
-        for i, c in enumerate(communities, 1):
-            st.write(f"Community {i}: {list(c)}")
+        col1, col2 = st.columns(2)
 
-# Draw Graph
-if len(G.nodes()) > 0:
-    st.subheader("📈 Network Visualization")
+        # Influencers
+        with col1:
+            st.subheader("⭐ Influencers")
 
-    fig, ax = plt.subplots()
-    pos = nx.spring_layout(G,seed= 42)
+            centrality = nx.degree_centrality(G)
+            sorted_centrality = sorted(centrality.items(), key=lambda x: x[1], reverse=True)
 
-    nx.draw(G, pos, with_labels=True, node_color="lightblue", ax=ax)
+            for fan, score in sorted_centrality:
+                st.write(f"{fan} → {round(score, 2)}")
 
-    st.pyplot(fig)
-    plt.close(fig)
-else:
-    st.info("Add nodes and edges from sidebar to start 🚀")
+        # Communities
+        with col2:
+            st.subheader("👥 Communities")
+
+            if len(G.edges()) > 0:
+                comm = list(community.greedy_modularity_communities(G))
+
+                for i, c in enumerate(comm, 1):
+                    st.write(f"Group {i}: {list(c)}")
+            else:
+                st.info("No connections yet")
+
+        # Graph
+        st.subheader("📈 Network Graph")
+
+        fig, ax = plt.subplots()
+        pos = nx.spring_layout(G, seed=42)
+
+        if len(G.edges()) > 0:
+            comm = list(community.greedy_modularity_communities(G))
+            colors = ["red", "blue", "green", "orange", "purple"]
+
+            color_map = {}
+            for i, group in enumerate(comm):
+                for node in group:
+                    color_map[node] = colors[i % len(colors)]
+
+            node_colors = [color_map[node] for node in G.nodes()]
+        else:
+            node_colors = "skyblue"
+
+        nx.draw(G, pos, with_labels=True, node_color=node_colors, node_size=2000, ax=ax)
+
+        st.pyplot(fig)
+        plt.close(fig)
+
+    else:
+        st.info("Add fans and connections to begin 🚀")
